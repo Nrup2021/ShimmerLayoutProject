@@ -2,6 +2,7 @@ package com.example.shimmerlayoutproject
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.shimmerlayoutproject.databinding.RowProductListItemBinding
@@ -27,6 +28,8 @@ class ProductAdapter(
     }
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
+        holder.binding.container.animation =
+            AnimationUtils.loadAnimation(holder.itemView.context, R.anim.alpha_animation)
         val product = productList[position]
         with(holder) {
             with(productList[position]) {
@@ -49,9 +52,12 @@ class ProductAdapter(
 
                         Glide.with(ivProductImage)
                             .load(product.url)
+                            .placeholder(R.drawable.ic_launcher_foreground)
+                            .error(android.R.drawable.ic_dialog_alert)
                             .into(ivProductImage)
                     }
 
+                    container.setOnClickListener { onItemClickListener?.let { it(product) } }
                 }
             }
         }
