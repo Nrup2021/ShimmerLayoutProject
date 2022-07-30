@@ -3,43 +3,103 @@ package com.example.shimmerlayoutproject
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.shimmerlayoutproject.databinding.ActivityMainBinding
+import com.example.shimmerlayoutproject.utils.showProgressAlertDialog
+
+// Reference :  https://medium.com/mobile-app-development-publication/swipe-to-refresh-not-showing-why-96b76c5c93e7
+// https://www.geeksforgeeks.org/pull-to-refresh-with-recyclerview-in-android-with-example/
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var productList: ArrayList<Product> = ArrayList()
+    private lateinit var productList: ArrayList<Product>
     private lateinit var adapter: ProductAdapter
+    private var myProgressBarDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.apply {
-            getProductList()
-            if (productList.size > 0) {
-                adapter = ProductAdapter((productList))
-                recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
-                recyclerView.hasFixedSize()
-                recyclerView.adapter = adapter
-            }
-        }
+        productList = ArrayList()
+        setUpRecyclerViewWithData()
 
-        val handler = Handler(Looper.getMainLooper())
-        handler.postDelayed({
-            adapter.showShimmer = false
-            adapter.notifyDataSetChanged()
-        }, 3000)
-
-        adapter.setOnItemClickListener { product ->
-            Toast.makeText(this, "${product.name} clicked", Toast.LENGTH_SHORT).show()
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            binding.swipeRefreshLayout.isRefreshing = false
+            setUpRecyclerViewWithData()
         }
     }
 
-    private fun getProductList() {
+    private fun setUpRecyclerViewWithData() {
+        showSwipeToRefreshLayout()
+        showLoader()
+        Handler(Looper.getMainLooper()).postDelayed({
+            productList = getProductList()
+            binding.apply {
+                recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
+                adapter = ProductAdapter((productList))
+                recyclerView.adapter = adapter
+                hideSwipeToRefreshLayout()
+                hideLoader()
+                adapter.setOnItemClickListener { product ->
+                    Toast.makeText(this@MainActivity, "${product.name} clicked", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }, 3000)
+
+    }
+
+    // Call when the a network service is invoke. We should disable
+    // further swipe-to-refresh since we don't want a double network
+    // call
+    private fun showSwipeToRefreshLayout() {
+        binding.apply {
+            if (!swipeRefreshLayout.isRefreshing) {
+                swipeRefreshLayout.post {
+                    swipeRefreshLayout.isEnabled = false
+                    swipeRefreshLayout.isRefreshing = true
+                }
+            }
+        }
+        Log.e("SwipeRefresh", "Started...")
+    }
+
+    // Call when the a network service is done. We should re-enable
+    // swipe-to-refresh as now we allow user to refresh it.
+    private fun hideSwipeToRefreshLayout() {
+        binding.apply {
+            if (swipeRefreshLayout.isRefreshing) {
+                swipeRefreshLayout.post {
+                    swipeRefreshLayout.isRefreshing = false
+                    swipeRefreshLayout.isEnabled = true
+                }
+            }
+        }
+        Log.e("SwipeRefresh", "Stopped...")
+    }
+
+    //  showing dialog
+    private fun showLoader() {
+        if (myProgressBarDialog == null)
+            myProgressBarDialog = showProgressAlertDialog {
+                cancelable = false
+                isBackGroundTransparent = true
+            }
+        myProgressBarDialog?.show()
+    }
+
+    private fun hideLoader() {
+        if (myProgressBarDialog != null) {
+            myProgressBarDialog!!.dismiss()
+        }
+    }
+
+    private fun getProductList(): ArrayList<Product> {
         productList = mutableListOf(
             Product(
                 1,
@@ -148,5 +208,8 @@ class MainActivity : AppCompatActivity() {
             ),
 
             ) as ArrayList<Product>
+
+        return productList
     }
+
 }

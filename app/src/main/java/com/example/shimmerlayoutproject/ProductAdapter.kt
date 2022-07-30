@@ -10,7 +10,6 @@ import com.example.shimmerlayoutproject.databinding.RowProductListItemBinding
 class ProductAdapter(
     private val productList: ArrayList<Product>
 ) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
-    var showShimmer: Boolean = true
 
     inner class ProductViewHolder(val binding: RowProductListItemBinding) :
         RecyclerView.ViewHolder(binding.root)
@@ -22,9 +21,8 @@ class ProductAdapter(
     }
 
 
-    override fun getItemCount(): Int = when {
-        showShimmer -> 10
-        else -> productList.size
+    override fun getItemCount(): Int {
+        return productList.size
     }
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
@@ -34,28 +32,17 @@ class ProductAdapter(
         with(holder) {
             with(productList[position]) {
                 with(binding) {
-                    if (showShimmer) {
-                        shimmerLayout.startShimmer()
-                    } else {
-                        shimmerLayout.stopShimmer()
-                        shimmerLayout.setShimmer(null)
 
-                        tvProductName.background = null
-                        tvProductDescription.background = null
-                        tvProductPrice.background = null
-                        ivProductImage.background = null
+                    tvProductName.text = product.name
+                    tvProductDescription.text = product.description
+                    tvProductPrice.text = product.price.toString()
 
+                    Glide.with(ivProductImage)
+                        .load(product.url)
+                        .placeholder(R.drawable.ic_launcher_foreground)
+                        .error(android.R.drawable.ic_dialog_alert)
+                        .into(ivProductImage)
 
-                        tvProductName.text = product.name
-                        tvProductDescription.text = product.description
-                        tvProductPrice.text = product.price.toString()
-
-                        Glide.with(ivProductImage)
-                            .load(product.url)
-                            .placeholder(R.drawable.ic_launcher_foreground)
-                            .error(android.R.drawable.ic_dialog_alert)
-                            .into(ivProductImage)
-                    }
 
                     container.setOnClickListener { onItemClickListener?.let { it(product) } }
                 }

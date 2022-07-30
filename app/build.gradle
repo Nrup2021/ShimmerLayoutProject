@@ -38,6 +38,11 @@ android {
 
 dependencies {
     implementation 'com.facebook.shimmer:shimmer:0.5.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+    // Lottie Animation
+    def lottie_version = "5.2.0"
+    implementation "com.airbnb.android:lottie:$lottie_version"
 
     // Glide
     def glide_version = "4.13.0"
